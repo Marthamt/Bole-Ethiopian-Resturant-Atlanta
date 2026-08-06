@@ -1,0 +1,6 @@
+{
+  "name": "Bole Ethiopian Restaurant Atlanta",
+  "description": "Modernized website for Bole Ethiopian Restaurant in Atlanta featuring AI menu recommendations, online reservations, online ordering, Amharic bilingual translation, and admin dashboard.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
