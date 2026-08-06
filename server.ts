@@ -283,11 +283,32 @@ async function startServer() {
 
   // 2. Reservation APIs
   app.get('/api/reservations', (req, res) => {
-    res.json({ success: true, count: reservationsDb.length, reservations: reservationsDb });
+    let result = [...reservationsDb];
+    const { query, phone, email, id } = req.query;
+
+    if (id && typeof id === 'string') {
+      result = result.filter(r => r.id.toLowerCase() === id.toLowerCase());
+    } else if (phone && typeof phone === 'string') {
+      const cleanPhone = phone.replace(/\D/g, '');
+      result = result.filter(r => r.phone.replace(/\D/g, '').includes(cleanPhone));
+    } else if (email && typeof email === 'string') {
+      result = result.filter(r => r.email.toLowerCase() === email.toLowerCase());
+    } else if (query && typeof query === 'string') {
+      const q = query.toLowerCase().replace(/\D/g, '');
+      const rawQ = query.toLowerCase();
+      result = result.filter(r => 
+        r.id.toLowerCase().includes(rawQ) ||
+        r.customerName.toLowerCase().includes(rawQ) ||
+        r.email.toLowerCase().includes(rawQ) ||
+        (q && r.phone.replace(/\D/g, '').includes(q))
+      );
+    }
+
+    res.json({ success: true, count: result.length, reservations: result });
   });
 
   app.post('/api/reservations', (req, res) => {
-    const { customerName, email, phone, guests, date, time, seatingArea, specialRequests } = req.body;
+    const { customerName, email, phone, guests, date, time, seatingArea, specialRequests, specialOccasion, notes } = req.body;
 
     if (!customerName || !phone || !date || !time) {
       res.status(400).json({ success: false, error: 'Name, phone, date, and time are required' });
@@ -295,7 +316,7 @@ async function startServer() {
     }
 
     const newRes = {
-      id: `RES-${Math.floor(1000 + Math.random() * 9000)}`,
+      id: req.body.id || `RES-${Math.floor(1000 + Math.random() * 9000)}`,
       customerName,
       email: email || '',
       phone,
@@ -303,13 +324,37 @@ async function startServer() {
       date,
       time,
       seatingArea: seatingArea || 'Indoor Cultural Dining',
-      specialRequests: specialRequests || '',
+      specialRequests: specialRequests || specialOccasion || notes || '',
+      specialOccasion: specialOccasion || '',
+      notes: notes || '',
       status: 'confirmed',
       createdAt: new Date().toISOString()
     };
 
     reservationsDb.unshift(newRes);
     res.status(201).json({ success: true, reservation: newRes });
+  });
+
+  app.delete('/api/reservations/:id', (req, res) => {
+    const { id } = req.params;
+    const initialCount = reservationsDb.length;
+    reservationsDb = reservationsDb.filter(r => r.id !== id);
+    if (reservationsDb.length === initialCount) {
+      res.status(404).json({ success: false, error: 'Reservation not found' });
+      return;
+    }
+    res.json({ success: true, message: `Reservation ${id} cancelled successfully` });
+  });
+
+  app.patch('/api/reservations/:id', (req, res) => {
+    const { id } = req.params;
+    const resIdx = reservationsDb.findIndex(r => r.id === id);
+    if (resIdx === -1) {
+      res.status(404).json({ success: false, error: 'Reservation not found' });
+      return;
+    }
+    reservationsDb[resIdx] = { ...reservationsDb[resIdx], ...req.body };
+    res.json({ success: true, reservation: reservationsDb[resIdx] });
   });
 
   // 3. Catering APIs

@@ -36,6 +36,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose 
   const [cateringLeads, setCateringLeads] = useState<CateringRequest[]>(INITIAL_CATERING_REQUESTS);
   const [kbList, setKbList] = useState<KnowledgeBaseItem[]>(KNOWLEDGE_BASE);
 
+  // Fetch live reservations & data when Admin Dashboard opens
+  React.useEffect(() => {
+    if (isOpen) {
+      fetch('/api/reservations')
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && Array.isArray(data.reservations)) {
+            setReservations(data.reservations);
+          }
+        })
+        .catch((err) => console.warn('Admin fetch reservations error:', err));
+    }
+  }, [isOpen]);
+
   // New Menu Item Form State
   const [showAddMenuModal, setShowAddMenuModal] = useState(false);
   const [newName, setNewName] = useState('');
@@ -273,20 +287,55 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose 
             {/* TAB 2: TABLE RESERVATIONS */}
             {activeTab === 'reservations' && (
               <div className="flex-1 p-5 overflow-y-auto space-y-4">
-                <h4 className="font-serif font-bold text-white text-sm uppercase tracking-wider">Upcoming Dining Reservations</h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="font-serif font-bold text-white text-sm uppercase tracking-wider">Upcoming Dining Reservations</h4>
+                  <button
+                    onClick={() => {
+                      fetch('/api/reservations')
+                        .then((res) => res.json())
+                        .then((data) => {
+                          if (data.success && Array.isArray(data.reservations)) {
+                            setReservations(data.reservations);
+                          }
+                        });
+                    }}
+                    className="text-xs text-amber-300 hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    Refresh List
+                  </button>
+                </div>
 
                 <div className="grid sm:grid-cols-2 gap-4">
                   {reservations.map((res) => (
                     <div key={res.id} className="glass-card p-4 rounded-2xl border border-white/15 shadow-lg space-y-2 text-xs">
                       <div className="flex justify-between items-start">
                         <span className="font-mono font-bold accent-gold glass px-2 py-0.5 rounded border border-amber-500/30">#{res.id}</span>
-                        <span className="glass border border-emerald-500/40 text-emerald-300 font-bold px-2 py-0.5 rounded uppercase text-[10px]">
-                          {res.status}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className={`glass border font-bold px-2 py-0.5 rounded uppercase text-[10px] ${
+                            res.status === 'confirmed'
+                              ? 'border-emerald-500/40 text-emerald-300'
+                              : 'border-red-500/40 text-red-300'
+                          }`}>
+                            {res.status}
+                          </span>
+                          <button
+                            onClick={async () => {
+                              if (!window.confirm(`Delete reservation #${res.id}?`)) return;
+                              try {
+                                await fetch(`/api/reservations/${res.id}`, { method: 'DELETE' });
+                              } catch (e) {}
+                              setReservations((prev) => prev.filter((r) => r.id !== res.id));
+                            }}
+                            className="p-1 text-slate-400 hover:text-red-400 cursor-pointer"
+                            title="Delete Reservation"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                       <div>
                         <h5 className="font-serif font-bold text-white text-sm">{res.customerName}</h5>
-                        <p className="text-slate-400 font-light">{res.phone} • {res.email}</p>
+                        <p className="text-slate-400 font-light">{res.phone} • {res.email || 'No email'}</p>
                       </div>
                       <div className="pt-2 border-t border-white/10 grid grid-cols-2 gap-1 text-slate-300 font-light">
                         <span>Date: <strong className="text-white">{res.date}</strong></span>

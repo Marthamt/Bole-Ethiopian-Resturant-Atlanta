@@ -33,6 +33,18 @@ export default function App() {
   const [cateringRequests, setCateringRequests] = useState<CateringRequest[]>(INITIAL_CATERING_REQUESTS);
   const [activeSection, setActiveSection] = useState('hero');
 
+  // Fetch real data from server API on mount
+  useEffect(() => {
+    fetch('/api/reservations')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.reservations)) {
+          setReservations(data.reservations);
+        }
+      })
+      .catch((err) => console.warn('Could not fetch reservations:', err));
+  }, []);
+
   // Handle adding items to cart
   const handleAddToCart = (
     item: MenuItem, 
@@ -205,6 +217,7 @@ export default function App() {
         onClose={() => setIsReservationOpen(false)}
         language={language}
         onAddReservation={handleAddReservation}
+        existingReservations={reservations}
       />
 
       <OrderDrawer

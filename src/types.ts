@@ -52,6 +52,7 @@ export interface Reservation {
   seatingArea: 'indoor' | 'patio' | 'mesob_traditional';
   specialOccasion?: string;
   notes?: string;
+  specialRequests?: string;
   status: 'confirmed' | 'pending' | 'cancelled';
   createdAt: string;
 }
