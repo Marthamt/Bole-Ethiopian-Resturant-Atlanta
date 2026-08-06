@@ -48,7 +48,7 @@ export const OrderDrawer: React.FC<OrderDrawerProps> = ({
   const deliveryFee = orderType === 'delivery' ? 4.99 : 0;
   const grandTotal = subtotal + tax + tip + deliveryFee;
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (!customerName || !phone) return;
 
     const newOrder: OrderStatus = {
@@ -65,6 +65,27 @@ export const OrderDrawer: React.FC<OrderDrawerProps> = ({
       estimatedTimeMinutes: orderType === 'pickup' ? 20 : 35,
       createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
+
+    try {
+      await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerName,
+          phone,
+          address: orderType === 'delivery' ? address : RESTAURANT_INFO.fullAddress,
+          type: orderType,
+          items: cart,
+          subtotal,
+          tax,
+          deliveryFee,
+          tip,
+          total: grandTotal
+        })
+      });
+    } catch (err) {
+      console.warn('Order API warning:', err);
+    }
 
     setActiveOrder(newOrder);
     onClearCart();

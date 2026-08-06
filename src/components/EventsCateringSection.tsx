@@ -34,7 +34,7 @@ export const EventsCateringSection: React.FC<EventsCateringSectionProps> = ({
   const perPersonPrice = packageType.includes('Royal') ? 24 : packageType.includes('Vegan') ? 18 : 22;
   const estimatedCost = guestCount * perPersonPrice;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !phone) return;
 
@@ -51,6 +51,16 @@ export const EventsCateringSection: React.FC<EventsCateringSectionProps> = ({
       status: 'new',
       createdAt: new Date().toISOString().split('T')[0]
     };
+
+    try {
+      await fetch('/api/catering', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(req)
+      });
+    } catch (err) {
+      console.warn('Catering API warning:', err);
+    }
 
     onAddCateringRequest(req);
     setSubmitted(true);

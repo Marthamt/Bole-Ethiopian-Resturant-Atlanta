@@ -49,7 +49,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
     '06:00 PM', '06:30 PM', '07:00 PM', '07:30 PM', '08:00 PM', '08:30 PM', '09:00 PM'
   ];
 
-  const handleConfirmReservation = () => {
+  const handleConfirmReservation = async () => {
     if (!customerName || !phone) return;
 
     const newRes: Reservation = {
@@ -66,6 +66,16 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
       status: 'confirmed',
       createdAt: new Date().toISOString().split('T')[0]
     };
+
+    try {
+      await fetch('/api/reservations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newRes)
+      });
+    } catch (err) {
+      console.warn('API sync warning:', err);
+    }
 
     onAddReservation(newRes);
     setCreatedReservation(newRes);

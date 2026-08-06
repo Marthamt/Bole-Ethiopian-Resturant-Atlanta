@@ -59,7 +59,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose 
     }
   };
 
-  const handleCreateMenuItem = (e: React.FormEvent) => {
+  const handleCreateMenuItem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newName) return;
 
@@ -77,13 +77,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose 
       isHalal: true
     };
 
+    try {
+      await fetch('/api/menu', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newItem)
+      });
+    } catch (err) {
+      console.warn('API sync warning:', err);
+    }
+
     setMenuList([newItem, ...menuList]);
     setShowAddMenuModal(false);
     setNewName('');
     setNewDesc('');
   };
 
-  const handleCreateKbItem = (e: React.FormEvent) => {
+  const handleDeleteMenuItem = async (id: string) => {
+    try {
+      await fetch(`/api/menu/${id}`, { method: 'DELETE' });
+    } catch (err) {
+      console.warn('API sync warning:', err);
+    }
+    setMenuList(menuList.filter(item => item.id !== id));
+  };
+
+  const handleCreateKbItem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newQuestion || !newAnswer) return;
 
@@ -93,6 +112,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose 
       answer: newAnswer,
       category: 'menu'
     };
+
+    try {
+      await fetch('/api/kb', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newKb)
+      });
+    } catch (err) {
+      console.warn('API sync warning:', err);
+    }
 
     setKbList([...kbList, newKb]);
     setNewQuestion('');
