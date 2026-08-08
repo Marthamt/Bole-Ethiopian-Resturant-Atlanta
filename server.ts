@@ -1,5 +1,6 @@
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
@@ -163,6 +164,8 @@ async function startServer() {
     }
   ];
 
+  const RESERVATIONS_FILE = path.join(__dirname, 'reservations_store.json');
+
   let reservationsDb = [
     {
       id: 'RES-8921',
@@ -173,7 +176,7 @@ async function startServer() {
       date: '2026-08-10',
       time: '7:00 PM',
       seatingArea: 'Indoor Cultural Dining',
-      specialRequests: 'Celebrating a anniversary. Coffee ceremony after dinner please!',
+      specialRequests: 'Celebrating an anniversary. Coffee ceremony after dinner please!',
       status: 'confirmed',
       createdAt: new Date().toISOString()
     },
@@ -191,6 +194,29 @@ async function startServer() {
       createdAt: new Date().toISOString()
     }
   ];
+
+  // Attempt to load existing stored reservations from disk
+  try {
+    if (fs.existsSync(RESERVATIONS_FILE)) {
+      const fileData = fs.readFileSync(RESERVATIONS_FILE, 'utf-8');
+      const parsed = JSON.parse(fileData);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        reservationsDb = parsed;
+      }
+    } else {
+      fs.writeFileSync(RESERVATIONS_FILE, JSON.stringify(reservationsDb, null, 2));
+    }
+  } catch (err) {
+    console.warn('Could not read reservations file:', err);
+  }
+
+  function saveReservationsToDisk() {
+    try {
+      fs.writeFileSync(RESERVATIONS_FILE, JSON.stringify(reservationsDb, null, 2));
+    } catch (err) {
+      console.warn('Could not save reservations file:', err);
+    }
+  }
 
   let cateringDb = [
     {
@@ -332,6 +358,7 @@ async function startServer() {
     };
 
     reservationsDb.unshift(newRes);
+    saveReservationsToDisk();
     res.status(201).json({ success: true, reservation: newRes });
   });
 
@@ -343,6 +370,7 @@ async function startServer() {
       res.status(404).json({ success: false, error: 'Reservation not found' });
       return;
     }
+    saveReservationsToDisk();
     res.json({ success: true, message: `Reservation ${id} cancelled successfully` });
   });
 
@@ -354,6 +382,7 @@ async function startServer() {
       return;
     }
     reservationsDb[resIdx] = { ...reservationsDb[resIdx], ...req.body };
+    saveReservationsToDisk();
     res.json({ success: true, reservation: reservationsDb[resIdx] });
   });
 

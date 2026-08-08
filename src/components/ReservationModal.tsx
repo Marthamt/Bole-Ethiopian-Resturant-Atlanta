@@ -82,7 +82,27 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
       const data = await response.json();
 
       if (data.success && Array.isArray(data.reservations)) {
-        setSearchResults(data.reservations);
+        // Merge server search results with local reservations matching the query
+        const map = new Map<string, Reservation>();
+        data.reservations.forEach((r: Reservation) => map.set(r.id, r));
+
+        const cleanQ = q.trim().toLowerCase();
+        const cleanPhone = q.replace(/\D/g, '');
+
+        existingReservations.forEach((r) => {
+          const matchId = r.id.toLowerCase().includes(cleanQ);
+          const matchName = r.customerName.toLowerCase().includes(cleanQ);
+          const matchEmail = r.email.toLowerCase().includes(cleanQ);
+          const matchPhone = cleanPhone && r.phone.replace(/\D/g, '').includes(cleanPhone);
+
+          if (!cleanQ || matchId || matchName || matchEmail || matchPhone) {
+            if (!map.has(r.id)) {
+              map.set(r.id, r);
+            }
+          }
+        });
+
+        setSearchResults(Array.from(map.values()));
       } else {
         // Fallback to searching local state
         const filtered = existingReservations.filter(r => 

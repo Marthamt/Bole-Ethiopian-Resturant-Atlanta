@@ -28,22 +28,57 @@ export default function App() {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
 
-  // App data state
-  const [reservations, setReservations] = useState<Reservation[]>(INITIAL_RESERVATIONS);
+  // App data state with LocalStorage fallback
+  const [reservations, setReservations] = useState<Reservation[]>(() => {
+    try {
+      const stored = localStorage.getItem('bole_reservations');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {}
+    return INITIAL_RESERVATIONS;
+  });
+
   const [cateringRequests, setCateringRequests] = useState<CateringRequest[]>(INITIAL_CATERING_REQUESTS);
   const [activeSection, setActiveSection] = useState('hero');
 
-  // Fetch real data from server API on mount
+  // Fetch real data from server API on mount and merge with local storage
   useEffect(() => {
     fetch('/api/reservations')
       .then((res) => res.json())
       .then((data) => {
         if (data.success && Array.isArray(data.reservations)) {
-          setReservations(data.reservations);
+          setReservations((prev) => {
+            // Combine server data and local data, keeping unique items by ID
+            const combinedMap = new Map<string, Reservation>();
+            // Add server items first
+            data.reservations.forEach((item: Reservation) => combinedMap.set(item.id, item));
+            // Add client items (overriding if client has local additions)
+            prev.forEach((item: Reservation) => {
+              if (!combinedMap.has(item.id)) {
+                combinedMap.set(item.id, item);
+              }
+            });
+            const merged = Array.from(combinedMap.values());
+            try {
+              localStorage.setItem('bole_reservations', JSON.stringify(merged));
+            } catch (e) {}
+            return merged;
+          });
         }
       })
-      .catch((err) => console.warn('Could not fetch reservations:', err));
+      .catch((err) => console.warn('Could not fetch reservations from server API:', err));
   }, []);
+
+  // Sync state to local storage whenever reservations update
+  useEffect(() => {
+    try {
+      localStorage.setItem('bole_reservations', JSON.stringify(reservations));
+    } catch (e) {}
+  }, [reservations]);
 
   // Handle adding items to cart
   const handleAddToCart = (
