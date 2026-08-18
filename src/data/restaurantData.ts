@@ -33,9 +33,10 @@ export const IMAGES = {
   doroWat: '/src/assets/images/bole_doro_wat_1786025879995.jpg',
   veggieCombo: '/src/assets/images/bole_veggie_combo_1786025890712.jpg',
   coffeeCeremony: '/src/assets/images/bole_coffee_ceremony_1786025908713.jpg',
-  // Fallback high quality food stock images for extra menu items
-  kitfo: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80&w=800',
-  tibs: 'https://images.unsplash.com/photo-1514944288352-fffac99f0bdf?auto=format&fit=crop&q=80&w=800',
+  // Generated authentic Ethiopian dish image paths
+  kitfo: '/src/assets/images/bole_special_kitfo_1786572817122.jpg',
+  tibs: '/src/assets/images/bole_sizzling_tibs_1786572586227.jpg',
+  lambAwazeTibs: '/src/assets/images/bole_lamb_awaze_tibs_1787084021318.jpg',
   tejWine: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&q=80&w=800',
   baklava: 'https://images.unsplash.com/photo-1519676867240-f03562e64548?auto=format&fit=crop&q=80&w=800'
 };
@@ -136,7 +137,7 @@ export const MENU_ITEMS: MenuItem[] = [
     description: 'Succulent cubed prime lamb tossed with spicy Awaze berbere paste, red onions, garlic, and fresh herbs.',
     price: 25.99,
     category: 'beef_lamb',
-    image: IMAGES.tibs,
+    image: IMAGES.lambAwazeTibs,
     isChefSpecial: true,
     isSpicy: true,
     spiceLevel: 2,
